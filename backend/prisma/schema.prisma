@@ -1,0 +1,407 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id              String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  areas           Area[]
+  assets          Asset[]
+  meterReadings   AssetMeterReading[]
+  audits          AuditLog[]
+  inventoryItems  InventoryItem[]
+  reservations    InventoryReservation[]
+  lines           Line[]
+  plants          Plant[]
+  preventivePlans PreventivePlan[]
+  tickets         Ticket[]
+  users           User[]
+  workOrders      WorkOrder[]
+  executions      WorkOrderExecution[]
+}
+
+model User {
+  id               String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  email            String               @unique
+  password         String
+  refreshTokenHash String?
+  role             String
+  tenantId         String               @db.Uuid
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  audits           AuditLog[]
+  tenant           Tenant               @relation(fields: [tenantId], references: [id])
+  executions       WorkOrderExecution[]
+
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action    String
+  entity    String
+  entityId  String
+  userId    String   @db.Uuid
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model Asset {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  description     String?
+  location        String?
+  tag             String?
+  status          String              @default("Ativo")
+  tenantId        String              @db.Uuid
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  areaId          String              @db.Uuid
+  lineId          String              @db.Uuid
+  plantId         String              @db.Uuid
+  area            Area                @relation(fields: [areaId], references: [id])
+  line            Line                @relation(fields: [lineId], references: [id])
+  plant           Plant               @relation(fields: [plantId], references: [id])
+  tenant          Tenant              @relation(fields: [tenantId], references: [id])
+  meterReadings   AssetMeterReading[]
+  preventivePlans PreventivePlan[]
+  tickets         Ticket[]
+  workOrders      WorkOrder[]
+
+  @@index([tenantId])
+  @@index([plantId])
+  @@index([areaId])
+  @@index([lineId])
+}
+
+model WorkOrder {
+  id                  String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title               String
+  description         String?
+  priority            String                 @default("Média")
+  assetId             String                 @db.Uuid
+  tenantId            String                 @db.Uuid
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  ticketId            String?                @db.Uuid
+  status              WorkOrderStatus        @default(Aberta)
+  situacaoMaterial    SituacaoMaterial       @default(Completo)
+  motivoParalisacao   String?
+  paralisadoEm        DateTime?
+  preventivePlanId    String?                @db.Uuid
+  delayCause          DelayCause?
+  documentGeneratedAt DateTime?
+  documentGeneratedBy String?                @db.Uuid
+  documentHash        String?
+  documentKey         String?
+  documentUrl         String?
+  inventoryMovements  InventoryMovement[]
+  reservations        InventoryReservation[]
+  asset               Asset                  @relation(fields: [assetId], references: [id])
+  preventivePlan      PreventivePlan?        @relation(fields: [preventivePlanId], references: [id])
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id])
+  ticket              Ticket?                @relation(fields: [ticketId], references: [id])
+  executions          WorkOrderExecution[]
+
+  @@index([tenantId, assetId])
+}
+
+model InventoryItem {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  description      String?
+  sku              String?
+  quantity         Int                    @default(0)
+  minStock         Int                    @default(0)
+  tenantId         String                 @db.Uuid
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  tenant           Tenant                 @relation(fields: [tenantId], references: [id])
+  movements        InventoryMovement[]
+  reservations     InventoryReservation[]
+  purchaseRequests PurchaseRequest[]
+
+  @@index([tenantId])
+}
+
+model PurchaseRequest {
+  id              String              @id @default(uuid()) @db.Uuid
+  tenantId        String              @db.Uuid
+  type            PurchaseRequestType @default(RCU)
+  inventoryItemId String              @db.Uuid
+  qty             Float
+  reason          String?
+  status          String              @default("Aberta")
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  inventoryItem   InventoryItem       @relation(fields: [inventoryItemId], references: [id])
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+}
+
+model Plant {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  code      String?
+  areas     Area[]
+  assets    Asset[]
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+model Area {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  plantId   String   @db.Uuid
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  plant     Plant    @relation(fields: [plantId], references: [id])
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  assets    Asset[]
+  lines     Line[]
+
+  @@index([tenantId])
+  @@index([plantId])
+}
+
+model Line {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  areaId    String   @db.Uuid
+  tenantId  String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+  area      Area     @relation(fields: [areaId], references: [id])
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([areaId])
+}
+
+model Ticket {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String
+  description String?
+  status      String      @default("Aberto")
+  priority    String      @default("Média")
+  assetId     String      @db.Uuid
+  tenantId    String      @db.Uuid
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  asset       Asset       @relation(fields: [assetId], references: [id])
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  workOrders  WorkOrder[]
+
+  @@index([tenantId])
+  @@index([assetId])
+}
+
+model WorkOrderExecution {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId  String    @db.Uuid
+  executorId   String    @db.Uuid
+  startedAt    DateTime
+  finishedAt   DateTime?
+  totalMinutes Int?
+  tenantId     String    @db.Uuid
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  executor     User      @relation(fields: [executorId], references: [id])
+  tenant       Tenant    @relation(fields: [tenantId], references: [id])
+  workOrder    WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  @@index([tenantId])
+  @@index([workOrderId])
+  @@index([executorId])
+  @@index([tenantId, workOrderId])
+}
+
+model InventoryReservation {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId        String              @db.Uuid
+  workOrderId     String              @db.Uuid
+  inventoryItemId String              @db.Uuid
+  requestedQty    Int
+  reservedQty     Int                 @default(0)
+  status          ReservationStatus   @default(Reservada)
+  reservedAt      DateTime            @default(now())
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  movements       InventoryMovement[]
+  inventoryItem   InventoryItem       @relation(fields: [inventoryItemId], references: [id])
+  tenant          Tenant              @relation(fields: [tenantId], references: [id])
+  workOrder       WorkOrder           @relation(fields: [workOrderId], references: [id])
+
+  @@index([tenantId])
+  @@index([workOrderId])
+  @@index([inventoryItemId])
+  @@index([tenantId, workOrderId])
+}
+
+model PreventivePlan {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String               @db.Uuid
+  assetId            String               @db.Uuid
+  name               String
+  description        String?
+  tipo               TipoPreventiva
+  intervaloDias      Int?
+  intervaloHoras     Int?
+  ativo              Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  proximaExecucao    DateTime?
+  ultimaExecucao     DateTime?
+  ultimaLeituraHoras Float?
+  statusPlano        PreventivePlanStatus @default(EmDia)
+  asset              Asset                @relation(fields: [assetId], references: [id])
+  tenant             Tenant               @relation(fields: [tenantId], references: [id])
+  workOrders         WorkOrder[]
+
+  @@index([tenantId])
+  @@index([assetId])
+  @@index([tenantId, assetId])
+}
+
+model InventoryMovement {
+  id              String                @id @default(uuid()) @db.Uuid
+  tenantId        String                @db.Uuid
+  inventoryItemId String                @db.Uuid
+  workOrderId     String?               @db.Uuid
+  reservationId   String?               @db.Uuid
+  type            InventoryMovementType
+  qty             Float
+  createdByUserId String?               @db.Uuid
+  createdAt       DateTime              @default(now())
+  inventoryItem   InventoryItem         @relation(fields: [inventoryItemId], references: [id])
+  reservation     InventoryReservation? @relation(fields: [reservationId], references: [id])
+  workOrder       WorkOrder?            @relation(fields: [workOrderId], references: [id])
+
+  @@index([tenantId])
+  @@index([inventoryItemId])
+  @@index([workOrderId])
+  @@index([reservationId])
+}
+
+model AssetMeterReading {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String      @db.Uuid
+  assetId     String      @db.Uuid
+  meterType   MeterType   @default(Horimetro)
+  source      MeterSource @default(Manual)
+  value       Float
+  readingAt   DateTime    @default(now())
+  externalRef String?
+  note        String?
+  createdAt   DateTime    @default(now())
+  asset       Asset       @relation(fields: [assetId], references: [id])
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([assetId])
+  @@index([tenantId, assetId])
+  @@index([meterType])
+  @@index([readingAt])
+}
+
+model WorkOrderStatusHistory {
+  id          String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workOrderId String          @db.Uuid
+  fromStatus  WorkOrderStatus
+  toStatus    WorkOrderStatus
+  changedById String          @db.Uuid
+  tenantId    String          @db.Uuid
+  createdAt   DateTime        @default(now())
+
+  @@index([tenantId])
+  @@index([workOrderId])
+  @@index([tenantId, workOrderId])
+  @@index([changedById])
+  @@index([createdAt])
+}
+
+enum SituacaoMaterial {
+  Completo
+  Parcial
+  Indisponivel
+}
+
+enum WorkOrderStatus {
+  Aberta
+  Planejada
+  EmExecucao
+  Paralisada
+  AguardandoTerceiro
+  AguardandoJanela
+  FinalizadaExecucao
+  Encerrada
+  Cancelada
+}
+
+enum ReservationStatus {
+  Reservada
+  Parcial
+  Cancelada
+  Consumida
+}
+
+enum InventoryMovementType {
+  Retirada
+  Consumo
+  Devolucao
+}
+
+enum PurchaseRequestType {
+  RCU
+}
+
+enum TipoPreventiva {
+  Tempo
+  Horimetro
+}
+
+enum MeterType {
+  Horimetro
+}
+
+enum MeterSource {
+  Manual
+  Integracao
+}
+
+enum PreventivePlanStatus {
+  EmDia
+  Vencido
+  Atrasado
+}
+
+enum DelayCause {
+  Logistica
+  AguardandoPeca
+  Terceiro
+  JanelaOperacional
+  FaltaMaoDeObra
+  Engenharia
+  Outros
+}

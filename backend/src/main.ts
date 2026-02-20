@@ -8,21 +8,21 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use((req: Request, res: Response, next: NextFunction) => {
-    const openPaths = ['/seed', '/setup', '/auth/register'];
+  const openPaths = ['/health'];
 
-    if (openPaths.includes(req.path)) {
-      return next();
-    }
+  if (openPaths.includes(req.path)) {
+    return next();
+  }
 
-    const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.headers['x-tenant-id'] as string;
 
-    if (!tenantId) {
-      return res.status(400).json({ error: 'x-tenant-id header required' });
-    }
+  if (!tenantId) {
+    return res.status(400).json({ error: 'x-tenant-id header required' });
+  }
 
-    (req as any).tenantId = tenantId;
-    next();
-  });;
+  (req as any).tenantId = tenantId;
+  next();
+});
 
   const port = Number(process.env.PORT) || 3000;
 

@@ -5,6 +5,14 @@ import { Request, Response, NextFunction } from 'express';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+
+  const app = await NestFactory.create(AppModule)
+
+  app.enableCors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+  
   const app = await NestFactory.create(AppModule);
 
   app.use((req: Request, res: Response, next: NextFunction) => {
@@ -27,6 +35,7 @@ async function bootstrap() {
   const port = Number(process.env.PORT) || 3000;
 
   await app.listen(port, '0.0.0.0');
+
 }
 
 bootstrap();

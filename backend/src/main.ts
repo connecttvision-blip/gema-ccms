@@ -7,9 +7,13 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(new ValidationPipe());
-
   app.use((req: Request, res: Response, next: NextFunction) => {
+    const openPaths = ['/seed', '/setup', '/auth/register'];
+
+    if (openPaths.includes(req.path)) {
+      return next();
+    }
+
     const tenantId = req.headers['x-tenant-id'] as string;
 
     if (!tenantId) {
@@ -18,8 +22,11 @@ async function bootstrap() {
 
     (req as any).tenantId = tenantId;
     next();
-  });
+  });;
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT) || 3000;
+
+  await app.listen(port, '0.0.0.0');
 }
+
 bootstrap();

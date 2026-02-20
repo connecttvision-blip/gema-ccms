@@ -8,11 +8,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:5173'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
-  });
+  origin: true,
+  credentials: true,
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-tenant-id',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+});
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     // ✅ liberar preflight CORS

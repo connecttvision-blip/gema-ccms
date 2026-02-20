@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom"
 import { MainLayout } from "../layouts/MainLayout"
 import { DashboardPage } from "../modules/dashboard/DashboardPage"
 import { LoginPage } from "../modules/auth/LoginPage"
+import { ProtectedRoute } from "./ProtectedRoute"
 
 export const router = createBrowserRouter([
   {
@@ -11,9 +12,11 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <MainLayout>
-        <DashboardPage />
-      </MainLayout>
+      <ProtectedRoute>
+        <MainLayout>
+          <DashboardPage />
+        </MainLayout>
+      </ProtectedRoute>
     ),
   },
 ])

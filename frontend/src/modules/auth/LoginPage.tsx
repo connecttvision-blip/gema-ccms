@@ -1,27 +1,30 @@
-import { useState } from "react"
-import { login } from "./auth.service"
+import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { login } from "./auth.service"
 
 export function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-
-async function handleSubmit(e: React.FormEvent) {
-  e.preventDefault()
   const navigate = useNavigate()
 
-  try {
-    // ✅ definir tenant antes do request
-    localStorage.setItem("tenant_id", "00ff437a-7e7e-4d9d-8d69-de206d6d9324")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
 
-    const data = await login({ email, password })
-localStorage.setItem("access_token", data.access_token)
-alert("Login realizado com sucesso")
-navigate("/")
-  } catch (error) {
-    alert("Erro no login")
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (loading) return
+
+    setLoading(true)
+    try {
+      const data = await login({ email, password })
+      localStorage.setItem("access_token", data.access_token)
+
+      navigate("/")
+    } catch (err) {
+      alert("Erro no login")
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -37,6 +40,7 @@ navigate("/")
           className="w-full border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
 
         <input
@@ -45,13 +49,15 @@ navigate("/")
           className="w-full border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
 
         <button
           type="submit"
-          className="w-full bg-gray-900 text-white p-2 rounded"
+          className="w-full bg-gray-900 text-white p-2 rounded disabled:opacity-60"
+          disabled={loading}
         >
-          Entrar
+          {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
     </div>

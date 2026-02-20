@@ -18,7 +18,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MeterModule } from './meter/meter.module';
 import { DocumentModule } from "./document/document.module";
 import { HealthController } from './health/health.controller';
-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),

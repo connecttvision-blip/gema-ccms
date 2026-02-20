@@ -5,35 +5,41 @@ import { Request, Response, NextFunction } from 'express';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ["http://localhost:5173"],
+    origin: ['http://localhost:5173'],
     credentials: true,
-  })
-  
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id'],
+  });
+
   app.use((req: Request, res: Response, next: NextFunction) => {
-  const openPaths = ['/health'];
+    // ✅ liberar preflight CORS
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
 
-  if (openPaths.includes(req.path)) {
-    return next();
-  }
+    const openPaths = ['/health'];
 
-  const tenantId = req.headers['x-tenant-id'] as string;
+    if (openPaths.includes(req.path)) {
+      return next();
+    }
 
-  if (!tenantId) {
-    return res.status(400).json({ error: 'x-tenant-id header required' });
-  }
+    const tenantId = req.headers['x-tenant-id'] as string;
 
-  (req as any).tenantId = tenantId;
-  next();
-});
+    if (!tenantId) {
+      return res.status(400).json({ error: 'x-tenant-id header required' });
+    }
+
+    (req as any).tenantId = tenantId;
+    next();
+  });
+
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const port = Number(process.env.PORT) || 3000;
-
   await app.listen(port, '0.0.0.0');
-
 }
 
 bootstrap();

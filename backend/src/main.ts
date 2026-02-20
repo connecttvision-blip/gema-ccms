@@ -13,8 +13,6 @@ async function bootstrap() {
     credentials: true,
   })
   
-  const app = await NestFactory.create(AppModule);
-
   app.use((req: Request, res: Response, next: NextFunction) => {
   const openPaths = ['/health'];
 

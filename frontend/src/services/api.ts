@@ -6,14 +6,13 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token")
-  const tenantId = localStorage.getItem("tenant_id")
+
+  // ✅ sempre enviar tenant fixo (até implementarmos multi-tenant dinâmico)
+  config.headers["x-tenant-id"] =
+    "00ff437a-7e7e-4d9d-8d69-de206d6d9324"
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
-  }
-
-  if (tenantId) {
-    config.headers["x-tenant-id"] = tenantId
   }
 
   return config

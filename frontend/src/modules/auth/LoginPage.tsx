@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { login } from "./auth.service"
+import { useNavigate } from "react-router-dom"
 
 export function LoginPage() {
   const [email, setEmail] = useState("")
@@ -7,16 +8,16 @@ export function LoginPage() {
 
 async function handleSubmit(e: React.FormEvent) {
   e.preventDefault()
+  const navigate = useNavigate()
 
   try {
     // ✅ definir tenant antes do request
     localStorage.setItem("tenant_id", "00ff437a-7e7e-4d9d-8d69-de206d6d9324")
 
     const data = await login({ email, password })
-
-    localStorage.setItem("access_token", data.access_token)
-
-    alert("Login realizado com sucesso")
+localStorage.setItem("access_token", data.access_token)
+alert("Login realizado com sucesso")
+navigate("/")
   } catch (error) {
     alert("Erro no login")
   }

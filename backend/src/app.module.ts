@@ -17,6 +17,7 @@ import { InventoryItemModule } from './inventory-item/inventory-item.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MeterModule } from './meter/meter.module';
 import { DocumentModule } from "./document/document.module";
+import { HealthController } from './health/health.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -38,6 +39,6 @@ import { DocumentModule } from "./document/document.module";
     DocumentModule,
 
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
 })
 export class AppModule {}

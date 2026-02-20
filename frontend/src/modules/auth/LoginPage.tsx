@@ -5,23 +5,22 @@ export function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault()
 
-    try {
-      const data = await login({ email, password })
+  try {
+    // ✅ definir tenant antes do request
+    localStorage.setItem("tenant_id", "00ff437a-7e7e-4d9d-8d69-de206d6d9324")
 
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem(
-        "tenant_id",
-        "00ff437a-7e7e-4d9d-8d69-de206d6d9324"
-      )
+    const data = await login({ email, password })
 
-      alert("Login realizado com sucesso")
-    } catch (error) {
-      alert("Erro no login")
-    }
+    localStorage.setItem("access_token", data.access_token)
+
+    alert("Login realizado com sucesso")
+  } catch (error) {
+    alert("Erro no login")
   }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
